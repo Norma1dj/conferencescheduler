@@ -56,6 +56,7 @@ class Presentation(models.Model):
         presentation.save()
         return presentation
 
+
     def get_api_url(self):
         return reverse("api_show_presentation", kwargs={"id": self.id})
 

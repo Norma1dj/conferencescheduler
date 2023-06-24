@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from common.json import ModelEncoder
-from .models import Presentation
+from .models import Presentation, Status
 from events.models import Conference
 from events.api_views import ConferenceListEncoder
 from django.views.decorators.http import require_http_methods
@@ -112,15 +112,22 @@ def api_show_presentation(request, id):
 
         # Get the Conference object and put it in the content dict
         try:
-            conference = Conference.objects.get(id=id)
-            content["conference"] = conference
+            if "conference" in content:
+                conference = Conference.objects.get(id=content["conference"])
+                content["conference"] = conference
         except Conference.DoesNotExist:
             return JsonResponse(
                 {"message": "Invalid conference id"},
                 status=400,
             )
-
-        presentation = Presentation.create(**content)
+        try:
+            if "status" in content:
+                content["status"] = Status.objects.get(name=content["status"])
+        except Status.DoesNotExist:
+            return JsonResponse({"message": "Invalid Status Name"}, status=400)
+        Presentation.objects.filter(id=id).update(**content)
+        presentation = Presentation.objects.get(id=id)
+        # presentation = Presentation.create(**content
         return JsonResponse(
             presentation,
             encoder=PresentationDetailEncoder,
